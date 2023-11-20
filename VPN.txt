@@ -1,0 +1,121 @@
+IMPLEMENTATION OF VPN
+1) Topology 
+2) IP Config
+
+Initial IP configuration.
+
+
+Device-Interface /IP Address/ Connected with
+PC0 / Fa0 192.168.1.2 /24 Router1 / Gig0/0
+PC1 / Fa0 192.168.2.2 /24 Router2 / Gig0/0
+Router1 / Se0/1/0 10.0.0.1 /8 Router 2 / Se0/1/0
+Router2 / Se0/1/0 10.0.0.2 /8 Router 1 / Se0/1/0
+Router2 / Se0/1/1 20.0.0.1 /8 Router3 / Se0/1/0
+Router3 / Se0/1/0 20.0.0.2 /8 Router2 / Se0/1/1
+
+4) Assign IP 
+router1:
+
+Router>enable
+Router#config t
+Router(config)#int gig0/0
+Router(config-if)#ip add 192.168.1.1 255.255.255.0
+Router(config-if)#no shut
+Router(config-if)#exit
+Router(config)#int se0/1/0
+Router(config-if)#ip address 10.0.0.1 255.0.0.0
+Router(config-if)#no shut
+
+2:
+Router>enable
+Router#config t
+Router(config)#int se0/1/0
+Router(config-if)#ip add 10.0.0.2 255.0.0.0
+Router(config-if)#no shut
+Router(config-if)#exit
+Router(config)#int se0/1/1
+Router(config-if)#ip add 20.0.0.1 255.0.0.0
+Router(config-if)#no shut
+
+3:
+Router>enable
+Router#config t
+Router(config)#int se0/1/0
+Router(config-if)#ip add 20.0.0.2 255.0.0.0
+Router(config-if)#no shut
+Router(config-if)#exit
+Router(config)#int gig0/0
+Router(config-if)#ip add 192.168.2.1 255.255.255.0
+Router(config-if)#no shut
+
+
+5)DEFAULT ROUTING CONFIGURATION ON ROUTER1:
+Router>enable
+Router#config t
+Enter configuration commands, one per line. End with CNTL/Z.
+Router(config)#ip route 0.0.0.0 0.0.0.0 10.0.0.2
+Router(config)#
+DEFAULT ROUTING CONFIGURATION ON ROUTER3:
+Router>enable
+Router#config t
+Enter configuration commands, one per line. End with CNTL/Z.
+Router(config)#ip route 0.0.0.0 0.0.0.0 20.0.0.1
+Router(config)#
+
+
+6. NOW CHECK THE CONNECTION BY PINGING EACH OTHER.
+
+First we go to Router1 and ping with Router3:
+Router#ping 20.0.0.2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 20.0.0.2, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 26/28/33 ms
+Now we go to Router3 and test the network by pinging Router1 interface.
+Router#ping 10.0.0.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.0.0.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 25/28/32 ms
+You can clearly see both routers pinging each other successfully.
+
+
+7. NOW CREATE VPN TUNNEL between Router1 and Router3:
+
+FIRST CREATE A VPN TUNNEL ON ROUTER1:
+Router#config t
+Router(config)#interface tunnel 200
+Router(config-if)#ip address 172.18.1.1 255.255.0.0
+Router(config-if)#tunnel source se0/1/0
+Router(config-if)#tunnel destination 20.0.0.2
+Router(config-if)#no shut
+
+NOW CREATE A VPN TUNNEL ON ROUTER R3:
+Router#config t
+Router(config)#interface tunnel 400
+Router(config-if)#ip address 172.18.1.2 255.255.0.0
+Router(config-if)#tunnel source se0/1/0
+Router(config-if)#tunnel destination 10.0.0.1
+Router(config-if)#no shut
+
+8. Now test communication between these two routers again by pinging each other:
+
+Router1
+Router#ping 172.18.1.2
+
+Router2
+Router#ping 172.18.1.1
+
+9. Now do routing for created VPN Tunnel on Both Router1 and Router3:
+
+Router(config)#ip route 192.168.2.0 255.255.255.0 172.18.1.2
+Router(config)#ip route 192.168.1.0 255.255.255.0 172.18.1.1
+
+10. TEST VPN TUNNEL CONFIGURATION
+
+Router#show interfaces Tunnel 200
+
+Now going to Router3 and test VPN Tunnel Creation:
+Router #show interface Tunnel 400
+
+11. Trace the VPN tunnel path.
