@@ -1,0 +1,25 @@
+Device / Interface IP Address Connected with
+PC0 / Fa0 10.0.0.2 /8 Router0 / Fa0/0
+PC1 / Fa0 20.0.0.2 /8 Router1 / Fa0/0
+Router0 / Se0/3/0 192.168.1.2 /30 Router1 / Se0/3/0
+Router1 / Se0/3/0 192.168.1.3 /30 Router0 / Se0/3/
+
+Use the connected laptops to find the DCE and DTE router
+ 
+route 0
+enable
+conf t
+int se0/3/0
+clock rate 250000
+encapsulation hdlc
+ip address 192.168.1.2 255.255.255.252
+no shut
+
+route 1
+enable
+conf t
+int se0/3/0
+clock rate 250000
+encapsulation hdlc
+ip address 192.168.1.6 255.255.255.252
+no shut
